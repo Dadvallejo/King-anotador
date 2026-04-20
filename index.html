@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>King — Marcador</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap');
+  :root {
+    --bg:#f4f1eb; --surface:#ffffff; --border:#ddd8cc;
+    --gold:#a07820; --gold-dim:#c9a84c;
+    --red:#c0392b; --red-bright:#e74c3c; --red-warn:rgba(192,57,43,0.12);
+    --green:#1e8a4a; --green-bright:#27ae60;
+    --text:#2c2418; --muted:#9a8e7a; --white:#ffffff;
+    --p1:#2176ae; --p2:#d4600a; --p3:#7b3fa0; --p4:#1a8a4a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Crimson Pro',Cambria,serif !important;}
+  body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',Cambria,serif;min-height:100vh;padding:12px;position:relative;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 20% 10%,rgba(160,120,32,.08) 0%,transparent 60%),radial-gradient(ellipse 40% 60% at 80% 90%,rgba(192,57,43,.05) 0%,transparent 60%);pointer-events:none;z-index:0;}
+  .container{position:relative;z-index:1;max-width:960px;margin:0 auto;}
+
+  header{text-align:center;padding:18px 0 14px;border-bottom:1px solid var(--border);margin-bottom:14px;position:relative;}
+  header h1{font-family:'Crimson Pro',Cambria,serif;font-size:clamp(1.7rem,5vw,2.8rem);font-weight:900;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;line-height:1;}
+  header .subtitle{font-size:.8rem;color:var(--muted);letter-spacing:.3em;text-transform:uppercase;margin-top:4px;}
+  .set-badge{position:absolute;top:52px;right:0;background:var(--surface);border:1px solid var(--gold-dim);color:var(--gold);font-size:.75rem;letter-spacing:.2em;padding:3px 8px;border-radius:2px;white-space:nowrap;}
+
+  .player-setup{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;}
+  .player-name-wrap{display:flex;flex-direction:column;gap:3px;}
+  .player-name-wrap label{font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
+  .player-name-wrap input{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Crimson Pro',Cambria,serif;font-size:.9rem;padding:5px 7px;border-radius:2px;width:100%;outline:none;}
+  .player-name-wrap input:focus{border-color:var(--gold-dim);}
+
+  .totals-bar{display:grid;grid-template-columns:100px repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:10px;}
+  .tb-label{background:var(--surface);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;padding:6px 7px;}
+  .tb-cell{background:var(--surface);text-align:center;padding:6px 3px;}
+  .tb-cell .player-tag{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:2px;}
+  .tb-cell .total-val{font-size:1.1rem;font-weight:600;font-family:'Crimson Pro',Cambria,serif;}
+
+  .p1-color{color:var(--p1);} .p2-color{color:var(--p2);} .p3-color{color:var(--p3);} .p4-color{color:var(--p4);}
+
+  .advantage-wrap{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:11px;}
+  .advantage-title{font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:8px;font-family:'Crimson Pro',Cambria,serif;}
+  .advantage-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+  .advantage-card{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .pair-label{font-size:.65rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);}
+  .pair-names{font-size:.85rem;color:var(--text);font-weight:600;text-align:center;}
+  .adv-scoreboard{display:flex;align-items:center;gap:8px;margin-top:4px;}
+  .adv-score-left,.adv-score-right{font-family:'Crimson Pro',Cambria,serif;font-size:2rem;font-weight:900;line-height:1;min-width:32px;text-align:center;}
+  .adv-dash{font-size:1.2rem;color:var(--muted);font-weight:300;}
+  .adv-pos{color:var(--green-bright);} .adv-neg{color:var(--red-bright);} .adv-zero{color:var(--muted);}
+
+  .score-table-wrap{border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:12px;}
+  .score-table{width:100%;border-collapse:collapse;}
+  .score-table thead tr{background:var(--surface);}
+  .score-table thead th{padding:3px 2px;border-bottom:2px solid var(--border);text-align:center;vertical-align:bottom;}
+  .score-table thead th.hand-th{text-align:center;padding-left:0;width:52px;}
+  .hand-icon-only{display:flex;align-items:center;justify-content:center;width:100%;}
+  .hand-icon-only svg{display:block;}
+  .score-table tbody tr{border-bottom:1px solid var(--border);}
+  .score-table tbody tr:last-child{border-bottom:none;}
+  .score-table tbody tr.section-neg{background:rgba(192,57,43,.04);}
+  .score-table tbody tr.section-pos{background:rgba(39,174,96,.04);}
+  .score-table tbody tr.section-sep td{background:var(--border);height:2px;padding:0;}
+  .players-btn{position:absolute;top:18px;left:0;background:var(--surface);border:1px solid var(--border);color:var(--gold);padding:6px 10px;border-radius:4px;cursor:pointer;display:flex;align-items:center;transition:all .2s;}
+  .players-btn:hover{background:var(--gold);color:var(--bg);}
+  .player-modal-row{display:flex;align-items:center;gap:12px;}
+  .player-dot{font-size:1.2rem;line-height:1;}
+  .player-modal-input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Crimson Pro',Cambria,serif;font-size:1rem;padding:8px 12px;border-radius:4px;outline:none;}
+  .player-modal-input:focus{border-color:var(--gold-dim);}
+  .score-table tbody tr.row-incomplete{background:var(--red-warn) !important;}
+  .score-table tbody td{padding:5px 2px;text-align:center;font-size:.72rem;}
+  .score-table tbody td.hand-name{text-align:center;padding:4px 2px;font-size:.6rem;color:var(--muted);letter-spacing:.03em;}
+  .score-table tbody td.hand-name .hand-icon{display:inline-block;width:15px;text-align:center;margin-right:2px;}
+  .score-table tbody td.hand-name.neg-hand{color:#a87070;}
+  .score-table tbody td.hand-name.pos-hand{color:#6aaa80;}
+  .step-hint{display:block;font-size:.44rem;color:var(--muted);margin-top:1px;letter-spacing:.04em;}
+
+  /* Value cells - just the number */
+  .cell-val{font-size:1.6rem;font-weight:700;min-width:34px;text-align:center;line-height:1.2;padding:4px 0;}
+  .diamond-note{font-size:.72rem;color:#4a90d9;font-weight:600;text-align:center;line-height:1;margin-top:1px;}
+  .val-neg{color:var(--red-bright);} .val-pos{color:var(--green-bright);} .val-zero{color:var(--muted);}
+
+  /* Radio button to select active hand */
+  .hand-radio{width:20px;height:20px;accent-color:var(--gold);cursor:pointer;flex-shrink:0;}
+  .hand-radio-dot{font-size:1.1rem;color:var(--muted);flex-shrink:0;line-height:1;transition:color .15s;}
+  tr.hand-active .hand-radio-dot{color:var(--gold);}
+  .hand-name-cell{display:flex;align-items:center;justify-content:space-between;padding:4px 6px 4px 4px;gap:6px;}
+  tr.hand-active{background:rgba(160,120,32,0.13) !important;outline:2px solid var(--gold);outline-offset:-2px;}
+
+  /* Tappable score cell */
+  .score-cell{cursor:pointer;padding:4px 2px;text-align:center;position:relative;}
+  .score-cell.active-cell{background:rgba(160,120,32,0.15) !important;border-radius:4px;}
+
+  /* Floating submenu */
+  .cell-submenu{
+    display:none;position:fixed;z-index:200;
+    background:var(--surface);border:1.5px solid var(--gold-dim);
+    border-radius:10px;padding:10px 8px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.18);
+    min-width:130px;
+  }
+  .cell-submenu.visible{display:block;}
+  .submenu-label{font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:6px;}
+  .submenu-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:5px;}
+  .submenu-row:last-child{margin-bottom:0;}
+  .submenu-type{font-size:.75rem;color:var(--text);white-space:nowrap;}
+  .sub-btn{width:38px;height:36px;border-radius:6px;border:1.5px solid var(--border);font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;background:var(--bg);touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;}
+  .sub-btn.plus{border-color:#3a5a3a;color:var(--green-bright);}
+  .sub-btn.plus:active{background:#d4f0dc;}
+  .sub-btn.minus{border-color:#5a2a2a;color:var(--red-bright);}
+  .sub-btn.minus:active{background:#f0d4d4;}
+  .sub-btn.dplus{border-color:#2a4a7a;color:#4a90d9;}
+  .sub-btn.dplus:active{background:#d0e8ff;}
+  .sub-btn.dminus{border-color:#5a2a2a;color:var(--red-bright);}
+  .sub-btn.dminus:active{background:#f0d4d4;}
+
+  .subtotal-row td{background:#141210 !important;padding:7px 3px !important;font-weight:600;font-size:1rem !important;border-top:1px solid var(--border);}
+  .subtotal-row td.hand-name{color:var(--gold) !important;font-size:.8rem !important;letter-spacing:.11em;}
+
+  .actions{display:flex;gap:7px;justify-content:flex-end;margin-bottom:14px;flex-wrap:wrap;}
+  .config-btn{position:absolute;top:18px;right:0;background:var(--surface);border:1px solid var(--border);color:var(--gold);padding:6px 10px;border-radius:4px;cursor:pointer;display:flex;align-items:center;transition:all .2s;}
+  .config-btn:hover{background:var(--gold);color:var(--bg);}
+
+
+
+  /* Totals summary */
+
+  /* Small note under each score in table */
+  .diamond-note{font-size:.7rem;color:#4a90d9;font-weight:700;text-align:center;line-height:1;margin-top:1px;}
+
+  /* Config modal fields */
+  .config-field{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .config-field:last-child{border-bottom:none;}
+  .config-label{font-size:.9rem;color:var(--text);}
+  .config-input{width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:1rem;padding:6px 10px;border-radius:4px;text-align:center;outline:none;}
+  .config-input:focus{border-color:var(--gold-dim);}
+  .btn{font-family:'Crimson Pro',Cambria,serif;font-size:.85rem;letter-spacing:.14em;text-transform:uppercase;padding:9px 18px;border:1px solid;border-radius:2px;cursor:pointer;transition:all .2s;background:transparent;}
+  .btn-primary{border-color:var(--gold);color:var(--gold);}
+  .btn-primary:hover{background:var(--gold);color:var(--bg);}
+  .btn-danger{border-color:var(--red);color:var(--red);}
+  .btn-danger:hover{background:var(--red);color:var(--white);}
+  .btn-secondary{border-color:var(--border);color:var(--muted);}
+  .btn-secondary:hover{border-color:var(--muted);color:var(--text);}
+  .btn-liquidar{border-color:#1a7a3a;color:#1a7a3a;background:transparent;border:1px solid;}
+  .btn-liquidar:hover{background:#1a7a3a;color:#fff;}
+
+  .history-section{margin-top:18px;padding-top:12px;border-top:1px solid var(--border);}
+  .history-title{font-size:.8rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+  .history-entry{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:8px 11px;margin-bottom:6px;display:grid;grid-template-columns:52px repeat(4,1fr);gap:3px;align-items:center;}
+  .he-set{font-size:.8rem;color:var(--muted);letter-spacing:.08em;}
+  .he-score{text-align:center;font-size:1rem;font-weight:600;}
+
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:100;align-items:center;justify-content:center;}
+  .overlay.active{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--gold-dim);border-radius:6px;padding:22px 26px;max-width:370px;width:92%;text-align:center;}
+  .modal h2{font-family:'Crimson Pro',Cambria,serif;color:var(--gold);font-size:1.45rem;margin-bottom:13px;}
+  .modal-scores{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+  .ms-card{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:10px;}
+  .ms-card .ms-name{font-size:.85rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px;}
+  .ms-card .ms-val{font-family:'Crimson Pro',Cambria,serif;font-size:1.85rem;font-weight:700;}
+  .modal-actions{display:flex;gap:8px;justify-content:center;}
+
+  @media(max-width:520px){
+    .score-table thead th.hand-th{width:85px;}
+    .score-table tbody td.hand-name{font-size:.52rem;padding-left:5px;}
+    .step-btn{width:27px;height:24px;font-size:.95rem;}
+    .cell-val{font-size:1.6rem;}
+    .player-setup{grid-template-columns:repeat(2,1fr);}
+    .totals-bar{grid-template-columns:72px repeat(4,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <button class="config-btn" onclick="openConfigModal()" title="Configuración">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+    <div id="set-badge" class="set-badge">SET 1</div>
+    <button class="players-btn" onclick="openPlayersModal()" title="Jugadores">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/>
+      </svg>
+    </button>
+    <h1>♣ King ♠</h1>
+    <div class="subtitle">Anotador de Puntos<br><span style="font-size:.7rem;letter-spacing:.15em;">by David Vallejo</span></div>
+  </header>
+
+  <div class="totals-bar">
+    <div class="tb-label">Acumulado pts</div>
+    <div class="tb-cell"><div class="player-tag p1-color" id="tag0">J1</div><div class="total-val p1-color" id="total0">0</div></div>
+    <div class="tb-cell"><div class="player-tag p2-color" id="tag1">J2</div><div class="total-val p2-color" id="total1">0</div></div>
+    <div class="tb-cell"><div class="player-tag p3-color" id="tag2">J3</div><div class="total-val p3-color" id="total2">0</div></div>
+    <div class="tb-cell"><div class="player-tag p4-color" id="tag3">J4</div><div class="total-val p4-color" id="total3">0</div></div>
+  </div>
+  <div class="totals-bar" style="margin-top:-1px;">
+    <div class="tb-label" style="color:#4a90d9;">♦ Acum. dia</div>
+    <div class="tb-cell"><div class="total-val" style="color:#4a90d9;font-size:.95rem;" id="accdiam0">0</div></div>
+    <div class="tb-cell"><div class="total-val" style="color:#4a90d9;font-size:.95rem;" id="accdiam1">0</div></div>
+    <div class="tb-cell"><div class="total-val" style="color:#4a90d9;font-size:.95rem;" id="accdiam2">0</div></div>
+    <div class="tb-cell"><div class="total-val" style="color:#4a90d9;font-size:.95rem;" id="accdiam3">0</div></div>
+  </div>
+  <div class="totals-bar" style="margin-top:-1px;">
+    <div class="tb-label" style="color:var(--gold);">⊞ Líneas</div>
+    <div class="tb-cell"><div class="total-val" style="color:var(--gold);font-size:.95rem;" id="acclines0">0</div></div>
+    <div class="tb-cell"><div class="total-val" style="color:var(--gold);font-size:.95rem;" id="acclines1">0</div></div>
+    <div class="tb-cell"><div class="total-val" style="color:var(--gold);font-size:.95rem;" id="acclines2">0</div></div>
+    <div class="tb-cell"><div class="total-val" style="color:var(--gold);font-size:.95rem;" id="acclines3">0</div></div>
+  </div>
+
+
+
+  <div class="score-table-wrap">
+    <table class="score-table" id="scoreTable">
+      <thead>
+        <tr>
+          <th class="hand-th">Mano</th>
+          <th class="p1-color" id="th0">J1</th>
+          <th class="p2-color" id="th1">J2</th>
+          <th class="p3-color" id="th2">J3</th>
+          <th class="p4-color" id="th3">J4</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+
+
+  <div class="actions" style="flex-direction:column;align-items:stretch;">
+    <div style="display:flex;gap:7px;">
+      <button class="btn btn-secondary" style="flex:1" onclick="clearCurrentSet()">Limpiar set</button>
+      <button class="btn btn-primary" style="flex:1" onclick="finishSet()">Terminar set →</button>
+    </div>
+    <div id="testmode-row" style="display:none;">
+      <button class="btn" style="width:100%;border-color:#9b59b6;color:#9b59b6;" onclick="fillRandom()">🎲 Aleatorios</button>
+    </div>
+    <div style="display:flex;gap:7px;">
+      <button class="btn btn-danger" style="flex:1" onclick="confirmReset()">Reset total</button>
+      <button class="btn btn-liquidar" style="flex:1" onclick="openLiquidar()">💵 Liquidar $</button>
+    </div>
+  </div>
+
+  <div class="history-section" id="historySection" style="display:none">
+    <div class="history-title">Historial de sets</div>
+    <div id="historyContainer"></div>
+  </div>
+</div>
+
+<!-- Floating cell submenu -->
+<div class="cell-submenu" id="cellSubmenu">
+  <div class="submenu-label" id="submenuLabel">J1 · Mano</div>
+  <div class="submenu-row">
+    <span class="submenu-type">Puntos</span>
+    <button class="sub-btn minus" ontouchstart="" onclick="submenuAdjust('pts',-1)">−</button>
+    <button class="sub-btn plus"  ontouchstart="" onclick="submenuAdjust('pts', 1)">+</button>
+  </div>
+  <div class="submenu-row">
+    <span class="submenu-type">♦ Diamantes</span>
+    <button class="sub-btn dminus" ontouchstart="" onclick="submenuAdjust('dia',-1)">−</button>
+    <button class="sub-btn dplus"  ontouchstart="" onclick="submenuAdjust('dia', 1)">+</button>
+  </div>
+</div>
+
+<!-- Liquidar Modal -->
+<div class="overlay" id="liquidarModal">
+  <div class="modal" style="max-width:420px;">
+    <h2 style="margin-bottom:16px;">💵 Liquidación</h2>
+    <div id="liquidarContent"></div>
+    <div class="modal-actions" style="margin-top:18px;">
+      <button class="btn btn-primary" onclick="document.getElementById('liquidarModal').classList.remove('active')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Config Modal -->
+<div class="overlay" id="configModal">
+  <div class="modal">
+    <h2 style="margin-bottom:16px;">⚙️ Configuración</h2>
+    <div class="config-field">
+      <span class="config-label">Valor por punto (pesos)</span>
+      <input type="number" class="config-input" id="cfg-step" value="100" min="1">
+    </div>
+    <div class="config-field">
+      <span class="config-label">Valor por diamante (pesos)</span>
+      <input type="number" class="config-input" id="cfg-diamond" value="1000" min="1">
+    </div>
+    <div class="config-field">
+      <span class="config-label">Valor por línea ganada (pesos)</span>
+      <input type="number" class="config-input" id="cfg-line" value="10000" min="1">
+    </div>
+    <div class="config-field">
+      <span class="config-label">Modo prueba</span>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="cfg-testmode" onchange="toggleTestMode()" style="width:20px;height:20px;accent-color:var(--gold);cursor:pointer;">
+        <span style="font-size:.85rem;color:var(--muted);" id="testmode-label">Inactivo</span>
+      </label>
+    </div>
+    <div class="modal-actions" style="margin-top:18px;">
+      <button class="btn btn-secondary" onclick="closeConfigModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveConfig()">Guardar ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Warning Modal -->
+<div class="overlay" id="warningModal">
+  <div class="modal">
+    <h2 style="font-size:1.1rem;margin-bottom:6px;color:var(--red-bright);">⚠️ Faltan basas por anotar</h2>
+    <p id="warningMsg" style="color:var(--text);font-size:0.9rem;margin-bottom:20px;line-height:1.8;text-align:left;"></p>
+    <div class="modal-actions" style="justify-content:center;">
+      <button class="btn btn-primary" onclick="document.getElementById('warningModal').classList.remove('active')">Volver a anotar</button>
+      <button class="btn btn-secondary" onclick="forceFinishSet()">Cerrar igual</button>
+    </div>
+  </div>
+</div>
+
+<!-- Players Modal -->
+<div class="overlay" id="playersModal">
+  <div class="modal">
+    <h2 style="margin-bottom:20px;">👥 Jugadores</h2>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:22px;">
+      <div class="player-modal-row">
+        <span class="player-dot p1-color">●</span>
+        <input type="text" class="player-modal-input" id="name0" value="Jugador 1" oninput="updateNames()" onfocus="clearDefault(this,'Jugador 1')" placeholder="Jugador 1">
+      </div>
+      <div class="player-modal-row">
+        <span class="player-dot p2-color">●</span>
+        <input type="text" class="player-modal-input" id="name1" value="Jugador 2" oninput="updateNames()" onfocus="clearDefault(this,'Jugador 2')" placeholder="Jugador 2">
+      </div>
+      <div class="player-modal-row">
+        <span class="player-dot p3-color">●</span>
+        <input type="text" class="player-modal-input" id="name2" value="Jugador 3" oninput="updateNames()" onfocus="clearDefault(this,'Jugador 3')" placeholder="Jugador 3">
+      </div>
+      <div class="player-modal-row">
+        <span class="player-dot p4-color">●</span>
+        <input type="text" class="player-modal-input" id="name3" value="Jugador 4" oninput="updateNames()" onfocus="clearDefault(this,'Jugador 4')" placeholder="Jugador 4">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="closePlayersModal()">Listo ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="overlay" id="confirmModal">
+  <div class="modal">
+    <h2 id="confirmTitle" style="font-size:1.2rem;margin-bottom:12px;">¿Confirmar?</h2>
+    <p id="confirmMsg" style="color:var(--muted);font-size:0.95rem;margin-bottom:20px;line-height:1.5;"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn btn-danger" id="confirmOkBtn">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal">
+  <div class="modal">
+    <h2 id="modal-title">Set terminado</h2>
+    <div class="modal-scores" id="modal-scores"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="startNewSet()">Nuevo set →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+let cfg = { stepValue: 100, diamondValue: 1000, lineValue: 10000 };
+
+function openConfigModal(){ document.getElementById('configModal').classList.add('active'); }
+function closeConfigModal(){ document.getElementById('configModal').classList.remove('active'); }
+let testMode = false;
+
+function toggleTestMode(){
+  testMode = document.getElementById('cfg-testmode').checked;
+  document.getElementById('testmode-label').textContent = testMode ? 'Activo' : 'Inactivo';
+  document.getElementById('testmode-row').style.display = testMode ? '' : 'none';
+}
+
+function saveConfig(){
+  const s = parseFloat(document.getElementById('cfg-step').value);
+  const d = parseFloat(document.getElementById('cfg-diamond').value);
+  const l = parseFloat(document.getElementById('cfg-line').value);
+  if(s > 0) cfg.stepValue = s;
+  if(d > 0) cfg.diamondValue = d;
+  if(l > 0) cfg.lineValue = l;
+  closeConfigModal();
+  updateAll();
+}
+
+function fillRandom(){
+  // Reset current steps
+  steps = Array.from({length:HANDS.length}, ()=>[0,0,0,0]);
+
+  HANDS.forEach((hand, hi) => {
+    if(!hand.maxSteps) return;
+    const total = hand.maxSteps;
+    // Distribute total steps randomly among 4 players
+    // Generate 3 random cut points to split total into 4 parts
+    const cuts = [0, ...Array.from({length:3}, ()=>Math.floor(Math.random()*(total+1))).sort((a,b)=>a-b), total];
+    for(let p=0;p<4;p++){
+      steps[hi][p] = cuts[p+1] - cuts[p];
+    }
+    // Shuffle player order so distribution isn't always skewed left
+    for(let p=3;p>0;p--){
+      const j = Math.floor(Math.random()*(p+1));
+      [steps[hi][p], steps[hi][j]] = [steps[hi][j], steps[hi][p]];
+    }
+  });
+
+  buildTable();
+  updateAll();
+  updateNames();
+}
+
+// ── Diamonds ──────────────────────────────────────────────────────────────────
+const HAND_LABELS = ['No Basas','No Corazones','No K ni J','No Q','No K♥','No Últ. 2 Basas','Positiva 1','Positiva 2','Positiva 3','Positiva 4'];
+let diamondsByHand = Array.from({length:10}, ()=>[0,0,0,0]); // [handIndex][playerIndex]
+
+
+// Build totals summary (sum across all hands per player)
+function buildDiamondTotals(){
+  for(let p=0;p<4;p++){
+    const setTotal = diamondsByHand.reduce((s,row)=>s+row[p],0);
+    const sd = document.getElementById(`subdia${p}`);
+    if(sd) sd.textContent = setTotal > 0 ? setTotal : '0';
+    const accTotal = accDiamonds[p] + setTotal;
+    const ad = document.getElementById(`accdiam${p}`);
+    if(ad) ad.textContent = accTotal > 0 ? accTotal + '♦' : '0';
+  }
+  updateLinesBar();
+}
+
+function updateLinesBar(){
+  // Current set lines
+  const w13 = [accAdvantage[0], accAdvantage[1]];
+  const w24 = [accAdvantage[2], accAdvantage[3]];
+  for(let hi=0;hi<HANDS.length;hi++){
+    const s0=scoreOf(hi,0),s2=scoreOf(hi,2),s1=scoreOf(hi,1),s3=scoreOf(hi,3);
+    if(steps[hi][0]>0||steps[hi][2]>0){if(s0>s2)w13[0]++;else if(s2>s0)w13[1]++;}
+    if(steps[hi][1]>0||steps[hi][3]>0){if(s1>s3)w24[0]++;else if(s3>s1)w24[1]++;}
+  }
+  const vals = [w13[0], w24[0], w13[1], w24[1]]; // p0,p1,p2,p3
+  for(let p=0;p<4;p++){
+    const el = document.getElementById(`acclines${p}`);
+    if(el) el.textContent = vals[p];
+  }
+}
+
+function adjustDiamond(p, dir){
+  if(activeHand === null){
+    alert('Selecciona primero una mano tocando su fila.');
+    return;
+  }
+  const hi = activeHand;
+  const newVal = diamondsByHand[hi][p] + dir;
+  if(newVal < 0) return;
+  diamondsByHand[hi][p] = newVal;
+  updateDiamondNote(hi, p);
+  buildDiamondTotals();
+}
+
+function updateDiamondNote(hi, p){
+  const el = document.getElementById(`dnote_${hi}_${p}`);
+  if(!el) return;
+  const d = diamondsByHand[hi][p];
+  if(d > 0){
+    el.textContent = `♦ ${(d * cfg.diamondValue).toLocaleString()}`;
+    el.style.display = '';
+  } else {
+    el.textContent = '';
+    el.style.display = 'none';
+  }
+}
+
+function updateAllDiamondNotes(){
+  for(let hi=0;hi<10;hi++)
+    for(let p=0;p<4;p++)
+      updateDiamondNote(hi, p);
+}
+
+function getHandIcon(id) {
+  const g = '#a09080';
+  const y = '#c9a84c';
+
+  // Shared diagonal strike line
+  const strike = `<line x1="4" y1="4" x2="32" y2="32" stroke="${g}" stroke-width="2.8" stroke-linecap="round"/>`;
+  const strikeY = `<line x1="4" y1="4" x2="32" y2="32" stroke="${y}" stroke-width="2.8" stroke-linecap="round"/>`;
+
+  // 1. No Basas: generic playing card outline + strike
+  if (id === 'basas') return `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="6" y="4" width="24" height="28" rx="3" stroke="${g}" stroke-width="2.2" fill="none"/>
+    <text x="10" y="16" font-size="9" font-family="Georgia,serif" font-weight="bold" fill="${g}">A</text>
+    <text x="16" y="28" font-size="14" font-family="Georgia,serif" fill="${g}">♠</text>
+    ${strike}
+  </svg>`;
+
+  // 2. No Corazones: heart + strike
+  if (id === 'corazones') return `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M18 30 C18 30 4 20 4 12 C4 7.5 7.5 5 11.5 5 C14.5 5 17 7 18 9.5 C19 7 21.5 5 24.5 5 C28.5 5 32 7.5 32 12 C32 20 18 30 18 30Z" fill="${g}"/>
+    ${strike}
+  </svg>`;
+
+  // 3. No K ni J: K and J letters with strike
+  if (id === 'kj') return `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <text x="2" y="26" font-size="18" font-family="Georgia,serif" font-weight="bold" fill="${g}">K</text>
+    <text x="18" y="26" font-size="18" font-family="Georgia,serif" font-weight="bold" fill="${g}">J</text>
+    ${strike}
+  </svg>`;
+
+  // 4. No Q: Q letter with strike
+  if (id === 'queen') return `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <text x="5" y="28" font-size="24" font-family="Georgia,serif" font-weight="bold" fill="${g}">Q</text>
+    ${strike}
+  </svg>`;
+
+  // 5. No K de corazones: K + small heart, in gold, with strike
+  if (id === 'kcorazon') return `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <text x="2" y="28" font-size="22" font-family="Georgia,serif" font-weight="bold" fill="${y}">K</text>
+    <text x="19" y="30" font-size="22" font-family="Georgia,serif" fill="${y}">♥</text>
+    ${strikeY}
+  </svg>`;
+
+  // 6. No últimas 2 basas: "2" + small spade + strike
+  if (id === 'ultbasas') return `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <text x="10" y="28" font-size="24" font-family="Georgia,serif" font-weight="bold" fill="${g}">2</text>
+    ${strike}
+  </svg>`;
+
+  // 7-10. Positivas: two suit symbols
+  if (id === 'pos1' || id === 'pos3') return `<svg width="36" height="28" viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <text x="4" y="22" font-size="16" font-family="Georgia,serif" fill="${g}">♠</text>
+    <text x="20" y="22" font-size="16" font-family="Georgia,serif" fill="${g}">♦</text>
+  </svg>`;
+
+  if (id === 'pos2' || id === 'pos4') return `<svg width="36" height="28" viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <text x="4" y="22" font-size="16" font-family="Georgia,serif" fill="${g}">♣</text>
+    <text x="20" y="22" font-size="16" font-family="Georgia,serif" fill="${g}">♥</text>
+  </svg>`;
+
+  return '';
+}
+
+
+// ── Hand definitions ─────────────────────────────────────────────────────────
+const HANDS = [
+  { id:'basas',     type:'neg', step:20,  maxSteps:13 },
+  { id:'corazones', type:'neg', step:20,  maxSteps:13 },
+  { id:'kj',        type:'neg', step:30,  maxSteps:8  },
+  { id:'queen',     type:'neg', step:50,  maxSteps:4  },
+  { id:'kcorazon',  type:'neg', step:160, maxSteps:1  },
+  { id:'ultbasas',  type:'neg', step:90,  maxSteps:2  },
+  { id:'pos1',      type:'pos', step:25,  maxSteps:13 },
+  { id:'pos2',      type:'pos', step:25,  maxSteps:13 },
+  { id:'pos3',      type:'pos', step:25,  maxSteps:13 },
+  { id:'pos4',      type:'pos', step:25,  maxSteps:13 },
+];
+
+let steps       = Array.from({length:HANDS.length}, ()=>[0,0,0,0]);
+let currentSet  = 1;
+let accumulated = [0,0,0,0];
+let accAdvantage= [0,0,0,0];
+let accDiamonds = [0,0,0,0];
+let history     = [];
+
+function init(){ buildTable(); buildDiamondTotals(); updateAll(); }
+
+let activeHand = null; // currently selected hand index
+
+function buildTable(){
+  // Build thead with just player names
+  const thead = document.querySelector('#scoreTable thead');
+  const names = getNames();
+  const pColors = ['var(--p1)','var(--p2)','var(--p3)','var(--p4)'];
+  thead.innerHTML = `<tr>
+    <th class="hand-th"></th>
+    ${[0,1,2,3].map(p=>`
+    <th>
+      <div style="padding:6px 2px;text-align:center;">
+        <div id="th${p}" style="color:${pColors[p]};font-size:.85rem;font-weight:700;">${names[p].slice(0,8)}</div>
+      </div>
+    </th>`).join('')}
+  </tr>`;
+
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+
+  HANDS.forEach((hand, hi)=>{
+    if(hi===6){
+      const subneg=document.createElement('tr');
+      subneg.className='subtotal-row';
+      subneg.innerHTML=`<td class="hand-name" style="color:#e74c3c !important;font-size:.7rem;">NEG</td>
+        <td id="subneg0">0</td><td id="subneg1">0</td><td id="subneg2">0</td><td id="subneg3">0</td>`;
+      tbody.appendChild(subneg);
+      const sep=document.createElement('tr');
+      sep.className='section-sep';
+      sep.innerHTML='<td colspan="5"></td>';
+      tbody.appendChild(sep);
+    }
+    const tr=document.createElement('tr');
+    tr.id=`row_${hi}`;
+    tr.className=hand.type==='neg'?'section-neg':'section-pos';
+    tr.style.cursor='pointer';
+    tr.onclick=()=>selectHand(hi);
+
+    const iconSvg = getHandIcon(hand.id, hand.type);
+    let html=`<td style="padding:2px 4px;">
+      <div class="hand-name-cell">
+        <span class="hand-icon-only">${iconSvg}</span>
+        <span class="hand-radio-dot" id="dot_${hi}">○</span>
+      </div>
+    </td>`;
+    // Tappable score cells
+    for(let p=0;p<4;p++){
+      html+=`<td class="score-cell" id="cell_${hi}_${p}" onclick="openSubmenu(${hi},${p},event)">
+        <div class="cell-val val-zero" id="val_${hi}_${p}">0</div>
+        <div class="diamond-note" id="dnote_${hi}_${p}" style="display:none;"></div>
+      </td>`;
+    }
+    tr.innerHTML=html;
+    tbody.appendChild(tr);
+  });
+
+  const subpos=document.createElement('tr');
+  subpos.className='subtotal-row';
+  subpos.innerHTML=`<td class="hand-name" style="color:#27ae60 !important;font-size:.7rem;">POS</td>
+    <td id="subpos0">0</td><td id="subpos1">0</td><td id="subpos2">0</td><td id="subpos3">0</td>`;
+  tbody.appendChild(subpos);
+
+  const sub=document.createElement('tr');
+  sub.className='subtotal-row';
+  sub.innerHTML=`<td class="hand-name" style="font-size:.7rem;">SET</td>
+    <td id="sub0">0</td><td id="sub1">0</td><td id="sub2">0</td><td id="sub3">0</td>`;
+  tbody.appendChild(sub);
+
+  const subdia=document.createElement('tr');
+  subdia.className='subtotal-row';
+  subdia.innerHTML=`<td class="hand-name" style="font-size:.7rem;color:#4a90d9 !important;">♦ DIA</td>
+    <td id="subdia0" style="color:#4a90d9">0</td><td id="subdia1" style="color:#4a90d9">0</td><td id="subdia2" style="color:#4a90d9">0</td><td id="subdia3" style="color:#4a90d9">0</td>`;
+  tbody.appendChild(subdia);
+
+}
+
+function selectHand(hi){
+  activeHand = hi;
+  document.querySelectorAll('#tableBody tr').forEach(r=>r.classList.remove('hand-active'));
+  document.querySelectorAll('.hand-radio-dot').forEach(d=>d.textContent='○');
+  const row = document.getElementById(`row_${hi}`);
+  if(row) row.classList.add('hand-active');
+  const dot = document.getElementById(`dot_${hi}`);
+  if(dot) dot.textContent='●';
+}
+
+
+// ── Cell submenu ──────────────────────────────────────────────────────────────
+let activeCell = {hi: null, p: null};
+
+function openSubmenu(hi, p, event){
+  event.stopPropagation();
+  // Select the hand too
+  selectHand(hi);
+  activeCell = {hi, p};
+
+  // Update label
+  const names = getNames();
+  const label = document.getElementById('submenuLabel');
+  if(label) label.textContent = names[p].slice(0,10) + ' · ' + HAND_LABELS[hi];
+
+  // Position near the tapped cell — always keep inside viewport
+  const menu = document.getElementById('cellSubmenu');
+  const cell = document.getElementById(`cell_${hi}_${p}`);
+  const rect = cell.getBoundingClientRect();
+  menu.style.left = '-9999px';
+  menu.style.top = '-9999px';
+  menu.classList.add('visible');
+  const mw = menu.offsetWidth || 150;
+  const mh = menu.offsetHeight || 130;
+  const pad = 8;
+  // Prefer centering under cell, but clamp to screen
+  let left = rect.left + rect.width/2 - mw/2;
+  let top = rect.bottom + 6;
+  // Clamp horizontally
+  if(left < pad) left = pad;
+  if(left + mw > window.innerWidth - pad) left = window.innerWidth - mw - pad;
+  // If no room below, show above
+  if(top + mh > window.innerHeight - pad) top = rect.top - mh - 6;
+  if(top < pad) top = pad;
+  menu.style.left = left + 'px';
+  menu.style.top = top + 'px';
+
+  // Highlight active cell
+  document.querySelectorAll('.score-cell').forEach(c=>c.classList.remove('active-cell'));
+  cell.classList.add('active-cell');
+}
+
+function closeSubmenu(){
+  document.getElementById('cellSubmenu').classList.remove('visible');
+  document.querySelectorAll('.score-cell').forEach(c=>c.classList.remove('active-cell'));
+  activeCell = {hi: null, p: null};
+}
+
+function submenuAdjust(type, dir){
+  const {hi, p} = activeCell;
+  if(hi === null || p === null) return;
+  if(type === 'pts'){
+    const hand = HANDS[hi];
+    const stepDir = dir;
+    const newVal = steps[hi][p] + stepDir;
+    if(newVal < 0) return;
+    if(hand.maxSteps && stepDir > 0){
+      const total = steps[hi].reduce((s,v)=>s+v,0);
+      if(total >= hand.maxSteps) return;
+    }
+    steps[hi][p] = newVal;
+    updateAll();
+  } else {
+    const newVal = diamondsByHand[hi][p] + dir;
+    if(newVal < 0) return;
+    diamondsByHand[hi][p] = newVal;
+    updateDiamondNote(hi, p);
+    buildDiamondTotals();
+  }
+}
+
+// Close submenu when tapping outside
+document.addEventListener('click', function(e){
+  const menu = document.getElementById('cellSubmenu');
+  if(menu && !menu.contains(e.target) && !e.target.closest('.score-cell')){
+    closeSubmenu();
+  }
+});
+
+function scoreOf(hi,pi){
+  const hand=HANDS[hi];
+  const s=steps[hi][pi];
+  return hand.type==='neg'?-(s*hand.step):(s*hand.step);
+}
+
+function getSetScores(){
+  return [0,1,2,3].map(p=>HANDS.reduce((sum,_,hi)=>sum+scoreOf(hi,p),0));
+}
+
+function updateAll(){
+  for(let hi=0;hi<HANDS.length;hi++){
+    const hand=HANDS[hi];
+    const row=document.getElementById(`row_${hi}`);
+    let totalSteps=0;
+    for(let p=0;p<4;p++){
+      const s=scoreOf(hi,p);
+      const el=document.getElementById(`val_${hi}_${p}`);
+      el.textContent=s===0?'0':(s>0?`+${s}`:`${s}`);
+      el.className='cell-val '+(s<0?'val-neg':s>0?'val-pos':'val-zero');
+      totalSteps+=steps[hi][p];
+    }
+    if(row && hand.maxSteps){
+      const anyPlayed=totalSteps>0;
+      const incomplete=totalSteps<hand.maxSteps;
+      if(anyPlayed && incomplete) row.classList.add('row-incomplete');
+      else row.classList.remove('row-incomplete');
+    }
+  }
+
+  const setScores=getSetScores();
+
+  // Neg totals
+  const negScores=[0,1,2,3].map(p=>HANDS.reduce((sum,_,hi)=>HANDS[hi].type==='neg'?sum+scoreOf(hi,p):sum,0));
+  const posScores=[0,1,2,3].map(p=>HANDS.reduce((sum,_,hi)=>HANDS[hi].type==='pos'?sum+scoreOf(hi,p):sum,0));
+  for(let p=0;p<4;p++){
+    const en=document.getElementById(`subneg${p}`);
+    en.textContent=negScores[p]>0?`+${negScores[p]}`:`${negScores[p]}`;
+    en.className=valClass(negScores[p]);
+    const ep=document.getElementById(`subpos${p}`);
+    ep.textContent=posScores[p]>0?`+${posScores[p]}`:`${posScores[p]}`;
+    ep.className=valClass(posScores[p]);
+    const el=document.getElementById(`sub${p}`);
+    el.textContent=setScores[p]>0?`+${setScores[p]}`:`${setScores[p]}`;
+    el.className=valClass(setScores[p]);
+  }
+
+  const totals=[0,1,2,3].map(p=>accumulated[p]+setScores[p]);
+  for(let p=0;p<4;p++){
+    const el=document.getElementById(`total${p}`);
+    el.textContent=totals[p]>0?`+${totals[p]}`:`${totals[p]}`;
+  }
+
+  // wins13[0]=wins by p1, wins13[1]=wins by p3
+  let wins13=[accAdvantage[0], accAdvantage[1]];
+  let wins24=[accAdvantage[2], accAdvantage[3]];
+  for(let hi=0;hi<HANDS.length;hi++){
+    const s1=scoreOf(hi,0),s3=scoreOf(hi,2);
+    const s2=scoreOf(hi,1),s4=scoreOf(hi,3);
+    const any13=steps[hi][0]>0||steps[hi][2]>0;
+    const any24=steps[hi][1]>0||steps[hi][3]>0;
+    if(any13){if(s1>s3)wins13[0]++;else if(s3>s1)wins13[1]++;}
+    if(any24){if(s2>s4)wins24[0]++;else if(s4>s2)wins24[1]++;}
+  }
+  updateAdvDisplay('adv13', wins13[0], wins13[1]);
+  updateAdvDisplay('adv24', wins24[0], wins24[1]);
+  buildDiamondTotals();
+}
+
+function setAdv(id,val){}  // kept for compatibility
+
+function updateAdvDisplay(id, wins1, wins2){
+  const left = document.getElementById(id+'-left');
+  const right = document.getElementById(id+'-right');
+  if(left) left.textContent = wins1;
+  if(right) right.textContent = wins2;
+}
+function valClass(v){return v<0?'val-neg':v>0?'val-pos':'val-zero';}
+
+function openLiquidar(){
+  const names = getNames();
+  const pColors = ['var(--p1)','var(--p2)','var(--p3)','var(--p4)'];
+
+  // Calculate total points per player (accumulated + current set)
+  const setScores = getSetScores();
+  const totalPts = [0,1,2,3].map(p => accumulated[p] + setScores[p]);
+
+  // Diamonds: each player who won N diamonds collects N * diamondValue from EACH of the other 3
+  // So net diamond balance per player = diamonds_won * value * 3 - sum(others_won) * value
+  const totalDia = [0,1,2,3].map(p =>
+    accDiamonds[p] + diamondsByHand.reduce((s,row)=>s+(row[p]||0),0)
+  );
+  const totalDiaAll = totalDia.reduce((a,b)=>a+b,0);
+
+  // Diamond pesos balance: I earn my diamonds * value from each of the 3 others,
+  // and I pay each other player their diamonds * value
+  // Net = totalDia[p] * value * 3  -  (totalDiaAll - totalDia[p]) * value
+  //     = value * (totalDia[p]*3 - totalDiaAll + totalDia[p])
+  //     = value * (totalDia[p]*4 - totalDiaAll)
+  const diaPesosBalance = [0,1,2,3].map(p =>
+    cfg.diamondValue * (totalDia[p] * 4 - totalDiaAll)
+  );
+
+  // Net in pesos: points * cfg.stepValue (zero-sum via average) + diamond balance
+  const ptsPesos = [0,1,2,3].map(p => totalPts[p] * cfg.stepValue);
+  const ptsAvg = ptsPesos.reduce((a,b)=>a+b,0) / 4;
+  const ptsBalance = ptsPesos.map(v => v - ptsAvg);
+
+  // Lines won balance: J1 vs J3, J2 vs J4
+  // wins13[0] = lines won by p0, wins13[1] = lines won by p2
+  // wins24[0] = lines won by p1, wins24[1] = lines won by p3
+  const w13 = [accAdvantage[0], accAdvantage[1]];
+  const w24 = [accAdvantage[2], accAdvantage[3]];
+  // Add current set lines
+  for(let hi=0;hi<HANDS.length;hi++){
+    const s0=scoreOf(hi,0),s2=scoreOf(hi,2),s1=scoreOf(hi,1),s3=scoreOf(hi,3);
+    if(steps[hi][0]>0||steps[hi][2]>0){if(s0>s2)w13[0]++;else if(s2>s0)w13[1]++;}
+    if(steps[hi][1]>0||steps[hi][3]>0){if(s1>s3)w24[0]++;else if(s3>s1)w24[1]++;}
+  }
+  // Net lines pesos: positive = won more lines, negative = lost more
+  const linesNet = [0,0,0,0];
+  // Pair 1-3: (w13[0]-w13[1]) * lineValue — p0 earns, p2 pays (or vice versa)
+  linesNet[0] = (w13[0] - w13[1]) * cfg.lineValue;
+  linesNet[2] = (w13[1] - w13[0]) * cfg.lineValue;
+  // Pair 2-4
+  linesNet[1] = (w24[0] - w24[1]) * cfg.lineValue;
+  linesNet[3] = (w24[1] - w24[0]) * cfg.lineValue;
+
+  const balance = [0,1,2,3].map(p => ptsBalance[p] + diaPesosBalance[p] + linesNet[p]);
+
+  // Build player summary cards
+  const cards = [0,1,2,3].map(p => `
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:8px;">
+      <div style="font-weight:700;color:${pColors[p]};font-size:1rem;margin-bottom:4px;">${names[p]}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;font-size:.82rem;">
+        <div><span style="color:var(--muted);font-size:.68rem;">Puntos</span><br><b>${totalPts[p]}</b></div>
+        <div><span style="color:var(--muted);font-size:.68rem;">Líneas $</span><br><b style="${linesNet[p]>=0?'color:var(--green-bright)':'color:var(--red-bright)'}">${(linesNet[p]>=0?'+':'')+linesNet[p].toLocaleString()}</b></div>
+        <div><span style="color:var(--muted);font-size:.68rem;">♦ Diamantes</span><br><b style="color:#4a90d9;">${totalDia[p]} ($ ${(diaPesosBalance[p]>=0?'+':'')+Math.round(diaPesosBalance[p]).toLocaleString()})</b></div>
+        <div><span style="color:var(--muted);font-size:.68rem;">Neto</span><br><b style="${balance[p]>=0?'color:var(--green-bright)':'color:var(--red-bright)'}">$ ${(balance[p]>=0?'+':'')+Math.round(balance[p]).toLocaleString()}</b></div>
+      </div>
+    </div>`).join('');
+
+  // Calculate who pays whom
+  // Separate debtors (negative balance) and creditors (positive balance)
+  let debtors = [0,1,2,3].map(p=>({p, bal:Math.round(balance[p])})).filter(x=>x.bal<0).sort((a,b)=>a.bal-b.bal);
+  let creditors = [0,1,2,3].map(p=>({p, bal:Math.round(balance[p])})).filter(x=>x.bal>0).sort((a,b)=>b.bal-a.bal);
+
+  let transfers = [];
+  let d = debtors.map(x=>({...x}));
+  let c = creditors.map(x=>({...x}));
+  let di=0, ci=0;
+  while(di<d.length && ci<c.length){
+    const debtor = d[di];
+    const creditor = c[ci];
+    const amount = Math.min(-debtor.bal, creditor.bal);
+    if(amount > 0){
+      transfers.push({from: debtor.p, to: creditor.p, amount});
+    }
+    debtor.bal += amount;
+    creditor.bal -= amount;
+    if(debtor.bal === 0) di++;
+    if(creditor.bal === 0) ci++;
+  }
+
+  const transferHtml = transfers.length === 0
+    ? '<div style="text-align:center;color:var(--muted);font-size:.9rem;">¡Nadie debe nada!</div>'
+    : '<div style="font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Transferencias sugeridas</div>' +
+      transfers.map(t=>`
+        <div style="display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:6px;">
+          <span style="color:var(--red-bright);font-weight:700;">${names[t.from]}</span>
+          <span style="color:var(--muted);">→</span>
+          <span style="color:var(--green-bright);font-weight:700;">${names[t.to]}</span>
+          <span style="margin-left:auto;font-size:1.1rem;font-weight:900;color:var(--text);">$ ${t.amount.toLocaleString()}</span>
+        </div>`).join('');
+
+  document.getElementById('liquidarContent').innerHTML = cards + '<hr style="margin:12px 0;border-color:var(--border);">' + transferHtml;
+  document.getElementById('liquidarModal').classList.add('active');
+}
+
+function getNames(){return[0,1,2,3].map(i=>document.getElementById(`name${i}`).value.trim()||`J${i+1}`);}
+function updateNames(){
+  const names=getNames(), s=names.map(n=>n.slice(0,8));
+  ['th0','th1','th2','th3'].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.textContent=s[i];});
+  ['tag0','tag1','tag2','tag3'].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.textContent=s[i];});
+  const p13=document.getElementById('pair13-names');
+  const p24=document.getElementById('pair24-names');
+  if(p13) p13.textContent=`${s[0]} vs ${s[2]}`;
+  if(p24) p24.textContent=`${s[1]} vs ${s[3]}`;
+}
+
+function finishSet(){
+  // ── Validation: check all hands have their max steps distributed ──
+  const missing = [];
+  HANDS.forEach((hand, hi) => {
+    if(!hand.maxSteps) return;
+    const total = steps[hi].reduce((s,v)=>s+v, 0);
+    if(total < hand.maxSteps){
+      const remaining = hand.maxSteps - total;
+      const labels = {
+        basas:    'No Basas',
+        corazones:'No Corazones',
+        kj:       'No K ni J',
+        queen:    'No Q',
+        kcorazon: 'No K de Corazones',
+        ultbasas: 'No Últimas 2 Basas',
+        pos1:'Positiva 1', pos2:'Positiva 2',
+        pos3:'Positiva 3', pos4:'Positiva 4',
+      };
+      missing.push(`• ${labels[hand.id]}: faltan ${remaining} basa${remaining>1?'s':''} por anotar`);
+    }
+  });
+
+  if(missing.length > 0){
+    const warn = document.getElementById('warningModal');
+    document.getElementById('warningMsg').innerHTML = missing.join('<br>');
+    warn.classList.add('active');
+    return;
+  }
+
+  const setScores=getSetScores();
+  const totals=[0,1,2,3].map(p=>accumulated[p]+setScores[p]);
+  const names=getNames();
+  const colors=['var(--p1)','var(--p2)','var(--p3)','var(--p4)'];
+  document.getElementById('modal-scores').innerHTML=[0,1,2,3].map(p=>`
+    <div class="ms-card">
+      <div class="ms-name" style="color:${colors[p]}">${names[p]}</div>
+      <div class="ms-val ${valClass(totals[p])}">${totals[p]>0?'+'+totals[p]:totals[p]}</div>
+    </div>`).join('');
+  document.getElementById('modal-title').textContent=`Set ${currentSet} terminado`;
+  document.getElementById('modal').classList.add('active');
+}
+
+function closeModal(){document.getElementById('modal').classList.remove('active');}
+
+function forceFinishSet(){
+  document.getElementById('warningModal').classList.remove('active');
+  const setScores=getSetScores();
+  const totals=[0,1,2,3].map(p=>accumulated[p]+setScores[p]);
+  const names=getNames();
+  const colors=['var(--p1)','var(--p2)','var(--p3)','var(--p4)'];
+  document.getElementById('modal-scores').innerHTML=[0,1,2,3].map(p=>`
+    <div class="ms-card">
+      <div class="ms-name" style="color:${colors[p]}">${names[p]}</div>
+      <div class="ms-val ${valClass(totals[p])}">${totals[p]>0?'+'+totals[p]:totals[p]}</div>
+    </div>`).join('');
+  document.getElementById('modal-title').textContent=`Set ${currentSet} terminado`;
+  document.getElementById('modal').classList.add('active');
+}
+
+function startNewSet(){
+  closeModal();
+  const setScores=getSetScores();
+  const totals=[0,1,2,3].map(p=>accumulated[p]+setScores[p]);
+  history.push({set:currentSet,scores:[...setScores],totals:[...totals]});
+  accumulated=[...totals];
+
+  let w13=[accAdvantage[0],accAdvantage[1]];
+  let w24=[accAdvantage[2],accAdvantage[3]];
+  for(let hi=0;hi<HANDS.length;hi++){
+    const s1=scoreOf(hi,0),s3=scoreOf(hi,2),s2=scoreOf(hi,1),s4=scoreOf(hi,3);
+    const any13=steps[hi][0]>0||steps[hi][2]>0, any24=steps[hi][1]>0||steps[hi][3]>0;
+    if(any13){if(s1>s3)w13[0]++;else if(s3>s1)w13[1]++;}
+    if(any24){if(s2>s4)w24[0]++;else if(s4>s2)w24[1]++;}
+  }
+  accAdvantage=[w13[0],w13[1],w24[0],w24[1]];
+  currentSet++;
+
+  accDiamonds = accDiamonds.map((v,i) => v + diamondsByHand.reduce((s,row)=>s+(row[i]||0),0));
+  diamondsByHand = Array.from({length:10},()=>[0,0,0,0]);
+  steps=Array.from({length:HANDS.length},()=>[0,0,0,0]);
+  activeHand=null;
+  buildTable();
+  document.getElementById('set-badge').textContent=`SET ${currentSet}`;
+  updateAll(); updateNames(); renderHistory();
+}
+
+function clearDefault(input, defaultVal){
+  if(input.value === defaultVal) input.value = '';
+}
+
+function openPlayersModal(){
+  document.getElementById('playersModal').classList.add('active');
+}
+function closePlayersModal(){
+  document.getElementById('playersModal').classList.remove('active');
+}
+
+function showConfirm(title, msg, onOk){
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent = msg;
+  document.getElementById('confirmOkBtn').onclick = () => { closeConfirm(); onOk(); };
+  document.getElementById('confirmModal').classList.add('active');
+}
+function closeConfirm(){
+  document.getElementById('confirmModal').classList.remove('active');
+}
+
+function clearCurrentSet(){
+  showConfirm(
+    'Limpiar set actual',
+    'Se borrarán los puntos del set en curso y se descontarán del acumulado.',
+    () => {
+      // Points: accumulated does NOT include current set (display = accumulated + setScores)
+      // So resetting steps is enough — accumulated stays as-is for pts ✓
+
+      // Diamonds: accDiamonds accumulates across sets, so subtract current set's diamonds
+      accDiamonds = accDiamonds.map((v,i) =>
+        Math.max(0, v - diamondsByHand.reduce((s,row)=>s+(row[i]||0),0))
+      );
+
+      // Lines: accAdvantage accumulates across sets, so subtract current set's lines
+      for(let hi=0;hi<HANDS.length;hi++){
+        const s0=scoreOf(hi,0),s2=scoreOf(hi,2),s1=scoreOf(hi,1),s3=scoreOf(hi,3);
+        if(steps[hi][0]>0||steps[hi][2]>0){
+          if(s0>s2) accAdvantage[0]=Math.max(0,accAdvantage[0]-1);
+          else if(s2>s0) accAdvantage[1]=Math.max(0,accAdvantage[1]-1);
+        }
+        if(steps[hi][1]>0||steps[hi][3]>0){
+          if(s1>s3) accAdvantage[2]=Math.max(0,accAdvantage[2]-1);
+          else if(s3>s1) accAdvantage[3]=Math.max(0,accAdvantage[3]-1);
+        }
+      }
+
+      // Reset current set data
+      steps=Array.from({length:HANDS.length},()=>[0,0,0,0]);
+      diamondsByHand=Array.from({length:10},()=>[0,0,0,0]);
+      activeHand=null;
+      buildTable(); updateAll(); updateNames();
+    }
+  );
+}
+
+function confirmReset(){
+  showConfirm(
+    'Reiniciar todo',
+    'Se borrarán TODOS los puntos, el acumulado y el historial. Esta acción no se puede deshacer.',
+    () => {
+      accumulated=[0,0,0,0]; accAdvantage=[0,0,0,0]; currentSet=1; history=[]; diamondsByHand=Array.from({length:10},()=>[0,0,0,0]); accDiamonds=[0,0,0,0]; buildDiamondTotals();
+      steps=Array.from({length:HANDS.length},()=>[0,0,0,0]);
+      buildTable();
+      document.getElementById('set-badge').textContent='SET 1';
+      updateAll(); updateNames(); renderHistory();
+    }
+  );
+}
+
+function renderHistory(){
+  const section=document.getElementById('historySection');
+  const container=document.getElementById('historyContainer');
+  if(!history.length){section.style.display='none';return;}
+  section.style.display='block';
+  const colors=['var(--p1)','var(--p2)','var(--p3)','var(--p4)'];
+  container.innerHTML=[...history].reverse().map(h=>`
+    <div class="history-entry">
+      <div class="he-set">Set ${h.set}</div>
+      ${[0,1,2,3].map(p=>`<div class="he-score ${valClass(h.totals[p])}" style="color:${colors[p]}">${h.totals[p]>0?'+'+h.totals[p]:h.totals[p]}</div>`).join('')}
+    </div>`).join('');
+}
+
+init(); updateNames();
+</script>
+</body>
+</html>
